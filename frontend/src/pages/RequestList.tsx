@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/apiClient';
-import { Clock, Package, ChevronRight, CheckCircle2, Factory, Truck, MapPin, AlertCircle } from 'lucide-react';
+import { Clock, Package, ChevronRight, CheckCircle2, Factory, Truck, MapPin, AlertCircle, Edit2, X, Save, Trash2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 const RequestList: React.FC = () => {
@@ -8,6 +8,9 @@ const RequestList: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const [editingRequest, setEditingRequest] = useState<any>(null);
+    const [editForm, setEditForm] = useState({ notes: '', pickupLocation: '' });
 
     const fetchRequests = async () => {
         try {
@@ -33,6 +36,38 @@ const RequestList: React.FC = () => {
             showToast('Error al actualizar el estado', 'error');
         }
     };
+
+    const handleEditSave = async () => {
+        try {
+            await api.put(`/requests/${editingRequest.id}`, editForm);
+            showToast('Solicitud actualizada correctamente', 'success');
+            setEditingRequest(null);
+            fetchRequests();
+        } catch (err) {
+            showToast('Error al actualizar la solicitud', 'error');
+        }
+    };
+
+    const startEdit = (req: any) => {
+        setEditingRequest(req);
+        setEditForm({
+            notes: req.notes || '',
+            pickupLocation: req.pickupLocation || ''
+        });
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) return;
+        try {
+            await api.delete(`/requests/${id}`);
+            showToast('Solicitud eliminada correctamente', 'info');
+            fetchRequests();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Error al eliminar la solicitud', 'error');
+        }
+    };
+
+
 
     const getStatusTheme = (status: string) => {
         switch (status) {
@@ -110,6 +145,17 @@ const RequestList: React.FC = () => {
 
                                 {/* Dynamic Actions based on Role and Status */}
                                 <div className="flex gap-2">
+                                {((user.id === req.requesterId && req.status === 'SOLICITUD_CREADA') || user.role === 'ADMIN' || user.role === 'LOGISTICA') && (
+                                    <>
+                                        <button onClick={() => startEdit(req)} className="btn-primary py-2.5 text-xs bg-slate-800 hover:bg-slate-700 flex items-center gap-2">
+                                            <Edit2 size={12} /> Editar
+                                        </button>
+                                        <button onClick={() => handleDelete(req.id)} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-700 hover:text-red-500 hover:border-red-500/30 transition-all shadow-inner">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </>
+                                )}
+
                                     {user.role === 'LOGISTICA' && req.status === 'SOLICITUD_CREADA' && (
                                         <button onClick={() => updateStatus(req.id, 'RECOGIDO_POR_LOGISTICA')} className="btn-primary py-2.5 text-xs">Marcar Recogido</button>
                                     )}
@@ -138,6 +184,72 @@ const RequestList: React.FC = () => {
                     );
                 })}
             </div>
+
+            {/* Edit Modal */}
+            {editingRequest && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in zoom-in duration-300">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/[0.05] blur-3xl -mr-32 -mt-32 rounded-full" />
+                        
+                        <div className="p-10 relative z-10 space-y-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-900/40 text-white">
+                                        <Edit2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-white italic uppercase">Editar Solicitud</h2>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{editingRequest.equipment.type.name} (ID: {editingRequest.equipment.visualId})</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setEditingRequest(null)} className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-600 hover:text-white transition-all">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Punto de Recogida</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                                        <input
+                                            type="text"
+                                            value={editForm.pickupLocation}
+                                            onChange={(e) => setEditForm({ ...editForm, pickupLocation: e.target.value })}
+                                            className="w-full input-premium bg-slate-950 border border-slate-800 rounded-2xl pl-16 pr-6 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Notas y Observaciones</label>
+                                    <textarea
+                                        value={editForm.notes}
+                                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                        rows={4}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-[1.5rem] px-6 py-4 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner resize-none leading-relaxed text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={handleEditSave}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
+                                >
+                                    <Save size={18} /> Guardar Cambios
+                                </button>
+                                <button
+                                    onClick={() => setEditingRequest(null)}
+                                    className="px-8 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-2xl transition-all uppercase text-[10px] tracking-widest"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

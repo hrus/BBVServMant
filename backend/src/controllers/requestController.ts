@@ -125,3 +125,58 @@ export const getRequests = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Error fetching requests' });
     }
 };
+export const updateRequest = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    const { notes, pickupLocation } = req.body;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const existingRequest = await prisma.serviceRequest.findUnique({ where: { id } });
+        if (!existingRequest) return res.status(404).json({ error: 'Request not found' });
+
+        // Only allow editing if Status is SOLICITUD_CREADA
+        if (existingRequest.status !== 'SOLICITUD_CREADA') {
+            return res.status(403).json({ error: 'No se puede editar una solicitud que ya ha sido procesada o finalizada' });
+        }
+
+        if (existingRequest.requesterId !== userId && req.user?.role !== 'ADMIN' && req.user?.role !== 'LOGISTICA') {
+            return res.status(403).json({ error: 'No tienes permiso para editar esta solicitud' });
+        }
+
+        const request = await prisma.serviceRequest.update({
+            where: { id },
+            data: { notes, pickupLocation },
+        });
+
+        res.json(request);
+    } catch (error) {
+        res.status(400).json({ error: 'Error updating request' });
+    }
+};
+
+export const deleteRequest = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const existingRequest = await prisma.serviceRequest.findUnique({ where: { id } });
+        if (!existingRequest) return res.status(404).json({ error: 'Request not found' });
+
+        // Only allow deletion if Status is SOLICITUD_CREADA
+        if (existingRequest.status !== 'SOLICITUD_CREADA') {
+            return res.status(403).json({ error: 'No se puede eliminar una solicitud que ya ha sido procesada o finalizada' });
+        }
+
+        if (existingRequest.requesterId !== userId && req.user?.role !== 'ADMIN' && req.user?.role !== 'LOGISTICA') {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar esta solicitud' });
+        }
+
+        await prisma.serviceRequest.delete({ where: { id } });
+        res.json({ message: 'Solicitud eliminada correctamente' });
+    } catch (error) {
+        res.status(400).json({ error: 'Error deleting request' });
+    }
+};
+

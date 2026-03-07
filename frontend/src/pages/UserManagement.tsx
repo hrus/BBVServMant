@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/apiClient';
-import { Shield, UserPlus, Trash2, Building2, Mail } from 'lucide-react';
+import { Shield, UserPlus, Trash2, Building2, Mail, Edit2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import type { User as UserType, Role } from '../types';
 
@@ -16,8 +16,22 @@ const UserManagement: React.FC = () => {
         vendorId: ''
     });
     const { showToast } = useToast();
+    const [editingUserId, setEditingUserId] = useState<string | null>(null);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const userRole: Role = user.role || 'SOLICITANTE';
+
+    if (userRole !== 'ADMIN') {
+        return (
+            <div className="p-10 text-center">
+                <h1 className="text-2xl font-black text-red-500 uppercase italic">Acceso Denegado</h1>
+                <p className="text-slate-400 mt-2">No tienes permisos para gestionar usuarios.</p>
+            </div>
+        );
+    }
 
     const fetchUsersAndVendors = async () => {
+
         try {
             const [usersRes, vendorsRes] = await Promise.all([
                 api.get('/auth/users'),
@@ -37,16 +51,39 @@ const UserManagement: React.FC = () => {
         fetchUsersAndVendors();
     }, []);
 
-    const handleCreateUser = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/auth/register', formData);
-            showToast('Usuario creado correctamente', 'success');
+            if (editingUserId) {
+                await api.put(`/auth/users/${editingUserId}`, formData);
+                showToast('Usuario actualizado correctamente', 'success');
+            } else {
+                await api.post('/auth/register', formData);
+                showToast('Usuario creado correctamente', 'success');
+            }
             setFormData({ name: '', email: '', password: '', role: 'SOLICITANTE', vendorId: '' });
+            setEditingUserId(null);
             fetchUsersAndVendors();
         } catch (err: any) {
-            showToast(err.response?.data?.error || 'Error al crear usuario', 'error');
+            showToast(err.response?.data?.error || 'Error al procesar la solicitud', 'error');
         }
+    };
+
+    const handleEdit = (user: UserType) => {
+        setEditingUserId(user.id);
+        setFormData({
+            name: user.name,
+            email: user.email,
+            password: '', // Password will be empty if not being changed
+            role: user.role,
+            vendorId: user.vendorId || ''
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingUserId(null);
+        setFormData({ name: '', email: '', password: '', role: 'SOLICITANTE', vendorId: '' });
     };
 
     const handleDeleteUser = async (id: string) => {
@@ -59,6 +96,7 @@ const UserManagement: React.FC = () => {
             showToast('Error al eliminar usuario', 'error');
         }
     };
+
 
 
     if (loading) return <div className="p-10 text-slate-400">Sincronizando base de usuarios...</div>;
@@ -78,12 +116,14 @@ const UserManagement: React.FC = () => {
 
                         <div className="flex items-center gap-4 mb-8 relative z-10">
                             <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-900/40">
-                                <UserPlus size={24} />
+                                {editingUserId ? <Shield size={24} /> : <UserPlus size={24} />}
                             </div>
-                            <h2 className="text-xl font-black text-white italic uppercase">Nueva Cuenta</h2>
+                            <h2 className="text-xl font-black text-white italic uppercase">
+                                {editingUserId ? 'Editar Cuenta' : 'Nueva Cuenta'}
+                            </h2>
                         </div>
 
-                        <form onSubmit={handleCreateUser} className="space-y-5 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Nombre Completo</label>
                                 <input
@@ -109,14 +149,16 @@ const UserManagement: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Contraseña Temporal</label>
+                                <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">
+                                    {editingUserId ? 'Nueva Contraseña (opcional)' : 'Contraseña Temporal'}
+                                </label>
                                 <input
                                     type="password"
-                                    required
+                                    required={!editingUserId}
                                     value={formData.password}
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold placeholder-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-inter"
-                                    placeholder="••••••••"
+                                    placeholder={editingUserId ? "Dejar en blanco para no cambiar" : "••••••••"}
                                 />
                             </div>
 
@@ -152,12 +194,23 @@ const UserManagement: React.FC = () => {
                                 </div>
                             )}
 
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] uppercase tracking-widest text-xs mt-4"
-                            >
-                                Registrar Usuario
-                            </button>
+                            <div className="flex gap-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] uppercase tracking-widest text-xs mt-4"
+                                >
+                                    {editingUserId ? 'Guardar Cambios' : 'Registrar Usuario'}
+                                </button>
+                                {editingUserId && (
+                                    <button
+                                        type="button"
+                                        onClick={cancelEdit}
+                                        className="px-6 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-2xl transition-all uppercase text-[10px] tracking-widest mt-4"
+                                    >
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -199,7 +252,14 @@ const UserManagement: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 relative z-10">
+                                    <button
+                                        onClick={() => handleEdit(u)}
+                                        className="p-3 bg-slate-950 text-slate-700 hover:text-blue-500 rounded-xl border border-slate-800 hover:border-blue-500/30 transition-all shadow-inner"
+                                        title="Editar usuario"
+                                    >
+                                        <Edit2 size={18} />
+                                    </button>
                                     <button
                                         onClick={() => handleDeleteUser(u.id)}
                                         className="p-3 bg-slate-950 text-slate-700 hover:text-red-500 rounded-xl border border-slate-800 hover:border-red-500/30 transition-all shadow-inner"

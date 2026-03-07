@@ -32,12 +32,15 @@ const Navbar: React.FC = () => {
                                 </Link>
                             )}
 
+                            {userRole === 'ADMIN' && (
+                                <Link to="/parks" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
+                                    <MapPin size={18} className="text-blue-500" />
+                                    <span>Parques</span>
+                                </Link>
+                            )}
+
                             {(userRole === 'LOGISTICA' || userRole === 'ADMIN') && (
                                 <>
-                                    <Link to="/parks" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
-                                        <MapPin size={18} className="text-blue-500" />
-                                        <span>Parques</span>
-                                    </Link>
                                     <Link to="/types" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
                                         <Tag size={18} className="text-blue-500" />
                                         <span>Tipos</span>
@@ -46,12 +49,16 @@ const Navbar: React.FC = () => {
                                         <Building2 size={18} className="text-blue-500" />
                                         <span>Empresas</span>
                                     </Link>
-                                    <Link to="/users" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
-                                        <User size={18} className="text-blue-500" />
-                                        <span>Usuarios</span>
-                                    </Link>
                                 </>
                             )}
+
+                            {userRole === 'ADMIN' && (
+                                <Link to="/users" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
+                                    <User size={18} className="text-blue-500" />
+                                    <span>Usuarios</span>
+                                </Link>
+                            )}
+
 
                             <Link to="/equipment" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-all font-medium py-1 px-3 rounded-lg hover:bg-slate-800">
                                 <Package size={18} className="text-blue-500" />

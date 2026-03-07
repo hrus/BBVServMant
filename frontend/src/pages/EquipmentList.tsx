@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/apiClient';
-import { Search, QrCode, User as UserIcon, AlertCircle, ChevronRight, MapPin, Plus, Save, X, Box, Eye, Smartphone, Download } from 'lucide-react';
+import { Search, QrCode, User as UserIcon, AlertCircle, ChevronRight, MapPin, Plus, Save, X, Box, Eye, Smartphone, Download, Edit2, Trash2 } from 'lucide-react';
+
 import { useToast } from '../context/ToastContext';
 import QRScannerModal from '../components/QRScannerModal';
 import type { Role } from '../types';
@@ -10,6 +11,7 @@ const EquipmentList: React.FC = () => {
     const [equipment, setEquipment] = useState([]);
     const [types, setTypes] = useState([]);
     const [parks, setParks] = useState([]);
+    const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -20,27 +22,32 @@ const EquipmentList: React.FC = () => {
         qrCode: '',
         rfidTag: '',
         typeId: '',
-        assignmentType: 'PARQUE',
+        assignmentType: 'PARQUE' as 'PARQUE' | 'PERSONAL',
         parkId: '',
+        ownerId: '',
         location: ''
     });
 
     const { showToast } = useToast();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userRole: Role = user.role || 'SOLICITANTE';
-    const canManage = userRole === 'LOGISTICA' || userRole === 'ADMIN';
+    const canManage = userRole === 'SOLICITANTE' || userRole === 'LOGISTICA' || userRole === 'ADMIN';
+
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [eqRes, typeRes, parkRes] = await Promise.all([
+            const [eqRes, typeRes, parkRes, userRes] = await Promise.all([
                 api.get('/equipment'),
                 api.get('/types'),
-                api.get('/parks')
+                api.get('/parks'),
+                api.get('/auth/users')
             ]);
             setEquipment(eqRes.data);
             setTypes(typeRes.data);
             setParks(parkRes.data);
+            setUsers(userRes.data);
         } catch (err) {
             console.error('Error fetching data', err);
         } finally {
@@ -52,14 +59,26 @@ const EquipmentList: React.FC = () => {
         fetchData();
     }, []);
 
-    const handleAddEquipment = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        console.log('Registering new equipment:', formData);
         try {
-            await api.post('/equipment', formData);
-            showToast('Equipo registrado correctamente', 'success');
+            const payload = { ...formData };
+            if (payload.assignmentType === 'PARQUE') {
+                payload.ownerId = '';
+            } else {
+                payload.parkId = '';
+            }
+
+            if (editingId) {
+                await api.put(`/equipment/${editingId}`, payload);
+                showToast('Equipo actualizado correctamente', 'success');
+            } else {
+                await api.post('/equipment', payload);
+                showToast('Equipo registrado correctamente', 'success');
+            }
             setShowAddForm(false);
+            setEditingId(null);
             setFormData({
                 visualId: '',
                 qrCode: '',
@@ -67,17 +86,45 @@ const EquipmentList: React.FC = () => {
                 typeId: '',
                 assignmentType: 'PARQUE',
                 parkId: '',
+                ownerId: '',
                 location: ''
             });
             fetchData();
         } catch (err: any) {
-            console.error('Error registering equipment:', err);
-            const errMsg = err.response?.data?.error || 'Error al registrar equipo';
+            const errMsg = err.response?.data?.error || 'Error al procesar la solicitud';
             showToast(errMsg, 'error');
         } finally {
             setSaving(false);
         }
     };
+
+    const handleEdit = (eq: any) => {
+        setEditingId(eq.id);
+        setFormData({
+            visualId: eq.visualId,
+            qrCode: eq.qrCode || '',
+            rfidTag: eq.rfidTag || '',
+            typeId: eq.typeId,
+            assignmentType: eq.assignmentType,
+            parkId: eq.parkId || '',
+            ownerId: eq.ownerId || '',
+            location: eq.location || ''
+        });
+        setShowAddForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de eliminar este equipo?')) return;
+        try {
+            await api.delete(`/equipment/${id}`);
+            showToast('Equipo eliminado', 'info');
+            fetchData();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Error al eliminar equipo', 'error');
+        }
+    };
+
 
     const handleScan = (data: string) => {
         const found: any = equipment.find((e: any) =>
@@ -140,7 +187,13 @@ const EquipmentList: React.FC = () => {
                     </div>
                     {canManage && (
                         <button
-                            onClick={() => setShowAddForm(!showAddForm)}
+                            onClick={() => {
+                                if (showAddForm) {
+                                    setEditingId(null);
+                                    setFormData({ visualId: '', qrCode: '', rfidTag: '', typeId: '', assignmentType: 'PARQUE', parkId: '', ownerId: '', location: '' });
+                                }
+                                setShowAddForm(!showAddForm);
+                            }}
                             className="bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
                         >
                             {showAddForm ? <X size={18} /> : <Plus size={18} />}
@@ -154,9 +207,11 @@ const EquipmentList: React.FC = () => {
                 <div className="bg-slate-900 p-10 rounded-[2.5rem] border border-slate-800 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/[0.03] blur-3xl -mr-48 -mt-48 rounded-full" />
 
-                    <h2 className="text-2xl font-black text-white italic uppercase mb-8 relative z-10">Registro de Alta de Activo</h2>
+                    <h2 className="text-2xl font-black text-white italic uppercase mb-8 relative z-10">
+                        {editingId ? 'Modificación de Activo' : 'Registro de Alta de Activo'}
+                    </h2>
 
-                    <form onSubmit={handleAddEquipment} className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">ID Visual / Referencia</label>
                             <input
@@ -183,19 +238,57 @@ const EquipmentList: React.FC = () => {
                             </select>
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Parque Asignado</label>
-                            <select
-                                value={formData.parkId}
-                                onChange={(e) => setFormData({ ...formData, parkId: e.target.value })}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold appearance-none uppercase text-xs"
-                                required
-                            >
-                                <option value="">-- Seleccionar --</option>
-                                {parks.map((p: any) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
+                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Tipo de Asignación</label>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, assignmentType: 'PARQUE' as any })}
+                                    className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.assignmentType === 'PARQUE' ? 'bg-blue-600 text-white' : 'bg-slate-950 text-slate-500 border border-slate-800'}`}
+                                >
+                                    Parque
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, assignmentType: 'PERSONAL' as any })}
+                                    className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.assignmentType === 'PERSONAL' ? 'bg-blue-600 text-white' : 'bg-slate-950 text-slate-500 border border-slate-800'}`}
+                                >
+                                    Personal
+                                </button>
+                            </div>
                         </div>
+
+                        {formData.assignmentType === 'PARQUE' ? (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Parque de Bomberos</label>
+                                <select
+                                    value={formData.parkId}
+                                    onChange={(e) => setFormData({ ...formData, parkId: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold appearance-none uppercase text-xs"
+                                    required
+                                >
+                                    <option value="">-- Seleccionar --</option>
+                                    {parks.map((p: any) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Bombero Asignado</label>
+                                <select
+                                    value={formData.ownerId}
+                                    onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold appearance-none uppercase text-xs"
+                                    required
+                                >
+                                    <option value="">-- Seleccionar --</option>
+                                    {users.filter((u: any) => u.role === 'SOLICITANTE' || u.role === 'LOGISTICA').map((u: any) => (
+                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Código QR (Opcional)</label>
                             <input
@@ -223,7 +316,7 @@ const EquipmentList: React.FC = () => {
                                 className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
                             >
                                 {saving ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
-                                {saving ? 'Registrando...' : 'Registrar Activo'}
+                                {saving ? 'Procesando...' : editingId ? 'Guardar Cambios' : 'Registrar Activo'}
                             </button>
                         </div>
                     </form>
@@ -297,17 +390,27 @@ const EquipmentList: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-10 py-10">
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex items-center gap-3 text-slate-300 font-bold uppercase tracking-wider text-xs">
-                                                <MapPin size={16} className="text-blue-500" />
-                                                <span>{e.park?.name || e.location || 'SIN UBICACIÓN'}</span>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-3 text-white font-black uppercase tracking-widest text-[10px]">
+                                                {e.assignmentType === 'PARQUE' ? (
+                                                    <>
+                                                        <MapPin size={14} className="text-blue-500" />
+                                                        <span>{e.park?.name || 'PARQUE DESCONOCIDO'}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <UserIcon size={14} className="text-blue-500" />
+                                                        <span>{e.owner?.name || 'SIN ASIGNAR'}</span>
+                                                    </>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-3 text-slate-500 text-xs">
-                                                <UserIcon size={16} className="text-slate-700" />
-                                                <span className="font-medium">{e.assignmentType === 'PERSONAL' ? e.owner?.name : 'DOTACIÓN PARQUE'}</span>
+                                            <div className="flex items-center gap-3 text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 w-fit">
+                                                <span className="text-blue-500/50">•</span>
+                                                {e.assignmentType === 'PARQUE' ? 'DOTACIÓN PARQUE' : 'ASIGNACIÓN PERSONAL'}
                                             </div>
                                         </div>
                                     </td>
+
                                     <td className="px-10 py-10 text-right">
                                         <div className="flex items-center justify-end gap-3">
                                             <Link
@@ -317,6 +420,24 @@ const EquipmentList: React.FC = () => {
                                             >
                                                 <Eye size={18} className="group-hover/eye:scale-110 transition-transform" />
                                             </Link>
+                                            {canManage && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(e)}
+                                                        className="p-3 bg-slate-950 border border-slate-800 rounded-2xl text-slate-500 hover:text-blue-500 hover:border-blue-500/30 transition-all"
+                                                        title="Editar equipo"
+                                                    >
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(e.id)}
+                                                        className="p-3 bg-slate-950 border border-slate-800 rounded-2xl text-slate-700 hover:text-red-500 hover:border-red-500/30 transition-all"
+                                                        title="Eliminar equipo"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </>
+                                            )}
                                             <button
                                                 onClick={() => window.location.href = `/requests/new?equipmentId=${e.id}`}
                                                 className="inline-flex items-center gap-2 text-xs font-black text-blue-500 hover:text-white bg-blue-500/5 hover:bg-blue-600 px-6 py-3 rounded-2xl border border-blue-500/10 hover:border-blue-500 transition-all shadow-inner uppercase tracking-widest active:scale-95 group/btn"

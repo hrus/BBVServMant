@@ -14,7 +14,16 @@ const ParkManagement: React.FC = () => {
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userRole = user.role;
-    const canManage = userRole === 'LOGISTICA' || userRole === 'ADMIN';
+
+    if (userRole !== 'ADMIN') {
+        return (
+            <div className="p-10 text-center">
+                <h1 className="text-2xl font-black text-red-500 uppercase italic">Acceso Denegado</h1>
+                <p className="text-slate-400 mt-2">No tienes permisos para gestionar parques.</p>
+            </div>
+        );
+    }
+
 
     const fetchData = async () => {
         try {
@@ -160,7 +169,6 @@ const ParkManagement: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-10 py-10 text-right">
-                                        {canManage && (
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeletePark(park.id)}
@@ -169,7 +177,7 @@ const ParkManagement: React.FC = () => {
                                             >
                                                 <Trash2 size={20} />
                                             </button>
-                                        )}
+
                                     </td>
                                 </tr>
                             ))}

@@ -36,3 +36,15 @@ export const updateVendor = async (req: AuthRequest, res: Response) => {
         res.status(400).json({ error: 'Error updating vendor' });
     }
 };
+export const deleteVendor = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.vendor.delete({ where: { id } });
+        res.json({ message: 'Vendor deleted successfully' });
+    } catch (error: any) {
+        if (error.code === 'P2003') {
+            return res.status(400).json({ error: 'No se puede eliminar la empresa porque tiene tipologías o equipos asociados' });
+        }
+        res.status(400).json({ error: 'Error deleting vendor' });
+    }
+};

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/apiClient';
-import { Tag, Plus, Info, Save, Building2, Wrench } from 'lucide-react';
+import { Tag, Plus, Info, Save, Building2, Wrench, ChevronRight, Trash2 } from 'lucide-react';
+
 import { useToast } from '../context/ToastContext';
 
 const TypeManagement: React.FC = () => {
@@ -9,6 +10,18 @@ const TypeManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({ name: '', vendorId: '' });
     const { showToast } = useToast();
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userRole = user.role;
+
+    if (userRole !== 'ADMIN' && userRole !== 'LOGISTICA') {
+        return (
+            <div className="p-10 text-center">
+                <h1 className="text-2xl font-black text-red-500 uppercase italic">Acceso Denegado</h1>
+                <p className="text-slate-400 mt-2">No tienes permisos para esta sección.</p>
+            </div>
+        );
+    }
 
     const fetchData = async () => {
         try {
@@ -29,17 +42,50 @@ const TypeManagement: React.FC = () => {
         fetchData();
     }, []);
 
-    const handleAddType = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/types', formData);
-            showToast('Tipo de equipo registrado correctamente', 'success');
+            if (editingId) {
+                await api.put(`/types/${editingId}`, formData);
+                showToast('Tipo de equipo actualizado correctamente', 'success');
+            } else {
+                await api.post('/types', formData);
+                showToast('Tipo de equipo registrado correctamente', 'success');
+            }
             setFormData({ name: '', vendorId: '' });
+            setEditingId(null);
             fetchData();
         } catch (err: any) {
-            showToast(err.response?.data?.error || 'Error al registrar tipo', 'error');
+            showToast(err.response?.data?.error || 'Error al procesar la solicitud', 'error');
         }
     };
+
+    const handleEdit = (type: any) => {
+        setEditingId(type.id);
+        setFormData({
+            name: type.name,
+            vendorId: type.vendorId
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setFormData({ name: '', vendorId: '' });
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar esta tipología?')) return;
+        try {
+            await api.delete(`/types/${id}`);
+            showToast('Tipología eliminada correctamente', 'success');
+            fetchData();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Error al eliminar tipología', 'error');
+        }
+    };
+
+
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -56,12 +102,14 @@ const TypeManagement: React.FC = () => {
 
                         <div className="flex items-center gap-4 mb-8 relative z-10">
                             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-900/40 text-white">
-                                <Plus size={24} />
+                                {editingId ? <Save size={24} /> : <Plus size={24} />}
                             </div>
-                            <h2 className="text-xl font-black text-white italic uppercase">Nueva Tipología</h2>
+                            <h2 className="text-xl font-black text-white italic uppercase">
+                                {editingId ? 'Editar Tipología' : 'Nueva Tipología'}
+                            </h2>
                         </div>
 
-                        <form onSubmit={handleAddType} className="space-y-6 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Nombre del Modelo / Tipo</label>
                                 <div className="relative">
@@ -97,12 +145,23 @@ const TypeManagement: React.FC = () => {
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
-                            >
-                                <Save size={18} /> Guardar Tipología
-                            </button>
+                            <div className="flex gap-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
+                                >
+                                    <Save size={18} /> {editingId ? 'Guardar Cambios' : 'Guardar Tipología'}
+                                </button>
+                                {editingId && (
+                                    <button
+                                        type="button"
+                                        onClick={cancelEdit}
+                                        className="px-6 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-2xl transition-all uppercase text-[10px] tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
                         </form>
 
                         <div className="mt-8 p-5 bg-blue-600/[0.03] border border-blue-500/10 rounded-2xl flex gap-3 italic relative z-10">
@@ -156,10 +215,22 @@ const TypeManagement: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-10 py-8 text-right">
-                                            <button className="p-3 bg-slate-950 text-slate-700 hover:text-white rounded-xl border border-slate-800 transition-all">
-                                                <Plus size={18} />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-3">
+                                                <button 
+                                                    onClick={() => handleEdit(type)}
+                                                    className="p-3 bg-slate-950 text-slate-700 hover:text-blue-500 hover:border-blue-500/50 rounded-xl border border-slate-800 transition-all group/btn"
+                                                >
+                                                    <ChevronRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(type.id)}
+                                                    className="p-3 bg-slate-950 text-slate-700 hover:text-red-500 hover:border-red-500/50 rounded-xl border border-slate-800 transition-all"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </td>
+
                                     </tr>
                                 ))}
                             </tbody>

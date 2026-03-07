@@ -5,8 +5,9 @@ import { authenticate, authorize } from '../middleware/auth';
 const router = Router();
 
 router.get('/', authenticate, getParks);
-router.post('/', authenticate, authorize(['LOGISTICA', 'ADMIN']), createPark);
-router.put('/:parkId/minimums', authenticate, authorize(['LOGISTICA', 'ADMIN']), updateParkMinimums);
-router.delete('/:id', authenticate, authorize(['LOGISTICA', 'ADMIN']), deletePark);
+router.post('/', authenticate, authorize(['ADMIN']), createPark);
+router.put('/:parkId/minimums', authenticate, authorize(['ADMIN']), updateParkMinimums);
+router.delete('/:id', authenticate, authorize(['ADMIN']), deletePark);
+
 
 export default router;

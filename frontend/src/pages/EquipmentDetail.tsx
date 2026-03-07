@@ -89,8 +89,13 @@ const EquipmentDetail: React.FC = () => {
                                     <MapPin size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ubicación Actual</p>
-                                    <p className="text-white font-bold">{equipment.location || (equipment.park?.name) || 'No asignada'}</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ubicación / Asignación</p>
+                                    <p className="text-white font-bold">
+                                        {equipment.assignmentType === 'PARQUE' 
+                                            ? (equipment.park?.name || 'Parque no especificado')
+                                            : `EQUIPO PERSONAL (${equipment.owner?.name || 'Sin bombero asignado'})`
+                                        }
+                                    </p>
                                 </div>
                             </div>
 
@@ -99,8 +104,13 @@ const EquipmentDetail: React.FC = () => {
                                     <User size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Responsable / Dueño</p>
-                                    <p className="text-white font-bold">{equipment.owner?.name || 'Asignación de Parque'}</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Responsable del Activo</p>
+                                    <p className="text-white font-bold">
+                                        {equipment.assignmentType === 'PERSONAL' 
+                                            ? equipment.owner?.name 
+                                            : 'Logística de Parque'
+                                        }
+                                    </p>
                                 </div>
                             </div>
 

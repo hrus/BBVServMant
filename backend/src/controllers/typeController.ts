@@ -38,3 +38,15 @@ export const updateEquipmentType = async (req: AuthRequest, res: Response) => {
         res.status(400).json({ error: 'Error updating equipment type' });
     }
 };
+export const deleteEquipmentType = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.equipmentType.delete({ where: { id } });
+        res.json({ message: 'Type deleted successfully' });
+    } catch (error: any) {
+        if (error.code === 'P2003') {
+            return res.status(400).json({ error: 'No se puede eliminar la tipología porque tiene equipos o solicitudes asociadas' });
+        }
+        res.status(400).json({ error: 'Error deleting equipment type' });
+    }
+};

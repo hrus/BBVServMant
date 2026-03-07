@@ -46,16 +46,21 @@ export const createEquipment = async (req: AuthRequest, res: Response) => {
 
 export const updateEquipment = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
-    const { ownerId, parkId, status, assignmentType } = req.body;
+    const { visualId, qrCode, rfidTag, typeId, assignmentType, ownerId, parkId, status, location } = req.body;
 
     try {
         const equipment = await prisma.equipment.update({
             where: { id },
             data: {
-                ownerId,
-                parkId,
-                status,
-                assignmentType
+                visualId,
+                qrCode: qrCode || null,
+                rfidTag: rfidTag || null,
+                typeId,
+                assignmentType: assignmentType || 'PARQUE',
+                ownerId: ownerId || null,
+                parkId: parkId || null,
+                status: status || 'EN_PARQUE',
+                location: location || null,
             },
         });
         res.json(equipment);
@@ -63,6 +68,20 @@ export const updateEquipment = async (req: AuthRequest, res: Response) => {
         res.status(400).json({ error: 'Error updating equipment' });
     }
 };
+
+export const deleteEquipment = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.equipment.delete({ where: { id } });
+        res.json({ message: 'Equipment deleted successfully' });
+    } catch (error: any) {
+        if (error.code === 'P2003') {
+            return res.status(400).json({ error: 'No se puede eliminar el equipo porque tiene solicitudes o registros de historial asociados' });
+        }
+        res.status(400).json({ error: 'Error deleting equipment' });
+    }
+};
+
 
 export const getEquipmentById = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;

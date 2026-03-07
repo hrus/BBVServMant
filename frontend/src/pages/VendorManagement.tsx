@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/apiClient';
-import { Building2, Plus, Info, ChevronRight, Save, Phone, MessageSquare } from 'lucide-react';
+import { Building2, Plus, Info, ChevronRight, Save, Phone, MessageSquare, Trash2 } from 'lucide-react';
+
 import { useToast } from '../context/ToastContext';
 
 const VendorManagement: React.FC = () => {
@@ -12,6 +13,18 @@ const VendorManagement: React.FC = () => {
     });
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
+
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const userRole = JSON.parse(localStorage.getItem('user') || '{}').role;
+
+    if (userRole !== 'ADMIN' && userRole !== 'LOGISTICA') {
+        return (
+            <div className="p-10 text-center">
+                <h1 className="text-2xl font-black text-red-500 uppercase italic">Acceso Denegado</h1>
+                <p className="text-slate-400 mt-2">No tienes permisos para esta sección.</p>
+            </div>
+        );
+    }
 
     const fetchVendors = async () => {
         try {
@@ -28,17 +41,51 @@ const VendorManagement: React.FC = () => {
         fetchVendors();
     }, []);
 
-    const handleAddVendor = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/vendors', formData);
-            showToast('Empresa externa registrada correctamente', 'success');
+            if (editingId) {
+                await api.put(`/vendors/${editingId}`, formData);
+                showToast('Empresa actualizada correctamente', 'success');
+            } else {
+                await api.post('/vendors', formData);
+                showToast('Empresa externa registrada correctamente', 'success');
+            }
             setFormData({ name: '', services: '', contactInfo: '' });
+            setEditingId(null);
             fetchVendors();
         } catch (err: any) {
-            showToast(err.response?.data?.error || 'Error al registrar empresa', 'error');
+            showToast(err.response?.data?.error || 'Error al procesar la solicitud', 'error');
         }
     };
+
+    const handleEdit = (vendor: any) => {
+        setEditingId(vendor.id);
+        setFormData({
+            name: vendor.name,
+            services: vendor.services || '',
+            contactInfo: vendor.contactInfo || ''
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setFormData({ name: '', services: '', contactInfo: '' });
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar esta empresa?')) return;
+        try {
+            await api.delete(`/vendors/${id}`);
+            showToast('Empresa eliminada correctamente', 'success');
+            fetchVendors();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Error al eliminar empresa', 'error');
+        }
+    };
+
+
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -55,12 +102,14 @@ const VendorManagement: React.FC = () => {
 
                         <div className="flex items-center gap-4 mb-8 relative z-10">
                             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-900/40 text-white">
-                                <Plus size={24} />
+                                {editingId ? <Save size={24} /> : <Plus size={24} />}
                             </div>
-                            <h2 className="text-xl font-black text-white italic uppercase">Nueva Empresa</h2>
+                            <h2 className="text-xl font-black text-white italic uppercase">
+                                {editingId ? 'Editar Empresa' : 'Nueva Empresa'}
+                            </h2>
                         </div>
 
-                        <form onSubmit={handleAddVendor} className="space-y-6 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] ml-2">Nombre de la Entidad</label>
                                 <input
@@ -98,12 +147,23 @@ const VendorManagement: React.FC = () => {
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
-                            >
-                                <Save size={18} /> Registrar Empresa
-                            </button>
+                            <div className="flex gap-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98] flex justify-center items-center gap-3 uppercase tracking-widest text-xs"
+                                >
+                                    <Save size={18} /> {editingId ? 'Guardar Cambios' : 'Registrar Empresa'}
+                                </button>
+                                {editingId && (
+                                    <button
+                                        type="button"
+                                        onClick={cancelEdit}
+                                        className="px-6 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-2xl transition-all uppercase text-[10px] tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
                         </form>
 
                         <div className="mt-8 p-5 bg-blue-600/[0.03] border border-blue-500/10 rounded-2xl flex gap-3 italic relative z-10">
@@ -148,9 +208,21 @@ const VendorManagement: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="p-4 bg-slate-950 text-slate-700 hover:text-white rounded-2xl border border-slate-800 transition-all">
-                                        <ChevronRight size={24} />
-                                    </button>
+                                    <div className="flex gap-3 relative z-10">
+                                        <button 
+                                            onClick={() => handleEdit(vendor)}
+                                            className="p-4 bg-slate-950 text-slate-700 hover:text-blue-500 hover:border-blue-500/50 rounded-2xl border border-slate-800 transition-all group/btn"
+                                        >
+                                            <ChevronRight size={24} className="group-hover/btn:translate-x-1 transition-transform" />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(vendor.id)}
+                                            className="p-4 bg-slate-950 text-slate-700 hover:text-red-500 hover:border-red-500/50 rounded-2xl border border-slate-800 transition-all"
+                                        >
+                                            <Trash2 size={24} />
+                                        </button>
+                                    </div>
+
                                 </div>
 
                                 {vendor.services && (
