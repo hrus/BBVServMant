@@ -11,6 +11,9 @@ const equipmentRoutes_1 = __importDefault(require("./routes/equipmentRoutes"));
 const requestRoutes_1 = __importDefault(require("./routes/requestRoutes"));
 const parkRoutes_1 = __importDefault(require("./routes/parkRoutes"));
 const dashboardRoutes_1 = __importDefault(require("./routes/dashboardRoutes"));
+const notificationRoutes_1 = __importDefault(require("./routes/notificationRoutes"));
+const typeRoutes_1 = __importDefault(require("./routes/typeRoutes"));
+const vendorRoutes_1 = __importDefault(require("./routes/vendorRoutes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3001;
@@ -21,6 +24,9 @@ app.use('/api/equipment', equipmentRoutes_1.default);
 app.use('/api/requests', requestRoutes_1.default);
 app.use('/api/parks', parkRoutes_1.default);
 app.use('/api/dashboard', dashboardRoutes_1.default);
+app.use('/api/notifications', notificationRoutes_1.default);
+app.use('/api/types', typeRoutes_1.default);
+app.use('/api/vendors', vendorRoutes_1.default);
 app.get('/', (req, res) => {
     res.json({ message: 'PPE Maintenance Tracking API is running' });
 });
@@ -37,3 +43,4 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
+// Final check

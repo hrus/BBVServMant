@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.deleteUser = exports.updateUser = exports.getUsers = exports.login = exports.register = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = __importDefault(require("../utils/prisma"));
@@ -48,3 +48,64 @@ const login = async (req, res) => {
     }
 };
 exports.login = login;
+const getUsers = async (req, res) => {
+    try {
+        const users = await prisma_1.default.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                vendorId: true,
+                createdAt: true,
+                vendor: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
+        res.json(users);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Error fetching users' });
+    }
+};
+exports.getUsers = getUsers;
+const updateUser = async (req, res) => {
+    const id = req.params.id;
+    const { name, email, role, vendorId, password } = req.body;
+    try {
+        const data = { name, email, role, vendorId };
+        if (password) {
+            data.password = await bcryptjs_1.default.hash(password, 10);
+        }
+        const user = await prisma_1.default.user.update({
+            where: { id },
+            data,
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                vendorId: true
+            }
+        });
+        res.json(user);
+    }
+    catch (error) {
+        res.status(400).json({ error: 'Error updating user' });
+    }
+};
+exports.updateUser = updateUser;
+const deleteUser = async (req, res) => {
+    const id = req.params.id;
+    try {
+        await prisma_1.default.user.delete({ where: { id } });
+        res.status(204).send();
+    }
+    catch (error) {
+        res.status(400).json({ error: 'Error deleting user' });
+    }
+};
+exports.deleteUser = deleteUser;

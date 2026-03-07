@@ -7,4 +7,5 @@ const router = (0, express_1.Router)();
 router.get('/', auth_1.authenticate, parkController_1.getParks);
 router.post('/', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), parkController_1.createPark);
 router.put('/:parkId/minimums', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), parkController_1.updateParkMinimums);
+router.delete('/:id', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), parkController_1.deletePark);
 exports.default = router;

@@ -1,0 +1,61 @@
+﻿node.exe : Loaded Prisma config from prisma.config.ts.
+En línea: 1 Carácter: 1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Loaded Prisma c...isma.config.ts.:String) [], RemoteExce 
+   ption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Running seed command `ts-node prisma/seed.ts` ...
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ÔÜí´©Å secrets for agents: https://dotenvx.com/as2
+PrismaClientKnownRequestError: 
+Invalid `prisma.vendor.upsert()` invocation in
+C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\prisma\seed.ts:52:40
+
+  49 });
+  50 
+  51 // Create Vendor first for external user
+ÔåÆ 52 const vendor = await prisma.vendor.upsert(
+The column `(not available)` does not exist in the current database.
+    at zr.handleRequestError (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\@pr
+isma\client\src\runtime\RequestHandler.ts:237:13)
+    at zr.handleAndLogRequestError (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modul
+es\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at zr.request (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\@prisma\client
+\src\runtime\RequestHandler.ts:152:12)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\@prisma\client\sr
+c\runtime\getPrismaClient.ts:808:24)
+    at async main (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\prisma\seed.ts:52:20) {
+  code: 'P2022',
+  meta: {
+    modelName: 'Vendor',
+    driverAdapterError: DriverAdapterError: ColumnNotFound
+        at PgTransaction.onError (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\adapter-pg\dist\index.js:687:11)
+        at PgTransaction.performIO (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modul
+es\@prisma\adapter-pg\dist\index.js:682:12)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at async PgTransaction.queryRaw (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_
+modules\@prisma\adapter-pg\dist\index.js:602:30)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:182:26)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:209:41)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:124:29)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:284:18)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:124:29)
+        at async e.interpretNode (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules
+\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:268:41) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.4.1'
+}
+
+An error occurred while running the seed command:
+Error: Command failed with exit code 1: ts-node prisma/seed.ts

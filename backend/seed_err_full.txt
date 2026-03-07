@@ -1,0 +1,55 @@
+﻿[dotenv@17.3.1] injecting env (3) from .env -- tip: ­ƒöÉ encrypt with Dotenvx: https://dotenvx.com
+node.exe : C:\Users\U17846\Documents\Proyectos\BBVServMant\backe
+nd\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:26
+0
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\U17846... 
+   maClient.ts:260:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+        throw new PrismaClientInitializationError(
+              ^
+PrismaClientInitializationError: `PrismaClient` needs to be 
+constructed with a non-empty, valid `PrismaClientOptions`:
+
+```
+new PrismaClient({
+  ...
+})
+```
+
+or
+
+```
+constructor() {
+  super({ ... });
+}
+```
+          
+    at new t (C:\Users\U17846\Documents\Proyectos\BBVServMant\ba
+ckend\node_modules\@prisma\client\src\runtime\getPrismaClient.ts
+:260:15)
+    at Object.<anonymous> (C:\Users\U17846\Documents\Proyectos\B
+BVServMant\backend\prisma\seed.ts:7:16)
+    at Module._compile 
+(node:internal/modules/cjs/loader:1804:14)
+    at Module.m._compile (C:\Users\U17846\Documents\Proyectos\BB
+VServMant\backend\node_modules\ts-node\src\index.ts:1618:23)
+    at node:internal/modules/cjs/loader:1936:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Users\U
+17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-no
+de\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1525:32)
+    at Module._load (node:internal/modules/cjs/loader:1327:12)
+    at TracingChannel.traceSync 
+(node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24) 
+{
+  clientVersion: '7.4.1',
+  errorCode: undefined,
+  retryable: undefined
+}

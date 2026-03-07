@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateParkMinimums = exports.createPark = exports.getParks = void 0;
+exports.deletePark = exports.updateParkMinimums = exports.createPark = exports.getParks = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const getParks = async (req, res) => {
     try {
@@ -11,7 +11,8 @@ const getParks = async (req, res) => {
             include: {
                 _count: {
                     select: { equipment: true }
-                }
+                },
+                minStocks: true
             }
         });
         res.json(parks);
@@ -62,3 +63,21 @@ const updateParkMinimums = async (req, res) => {
     }
 };
 exports.updateParkMinimums = updateParkMinimums;
+const deletePark = async (req, res) => {
+    const id = req.params.id;
+    try {
+        // Delete related min stocks first to avoid FK constraint issues
+        await prisma_1.default.parkEquipmentMin.deleteMany({
+            where: { parkId: id }
+        });
+        await prisma_1.default.park.delete({
+            where: { id },
+        });
+        res.status(204).send();
+    }
+    catch (error) {
+        console.error('Error deleting park:', error);
+        res.status(400).json({ error: 'No se puede eliminar el parque. Asegúrate de que no tenga equipos asociados.' });
+    }
+};
+exports.deletePark = deletePark;

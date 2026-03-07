@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const typeController_1 = require("../controllers/typeController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/', auth_1.authenticate, typeController_1.getEquipmentTypes);
+router.post('/', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), typeController_1.createEquipmentType);
+router.put('/:id', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), typeController_1.updateEquipmentType);
+exports.default = router;

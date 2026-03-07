@@ -1,13 +1,33 @@
-import { PrismaClient, Role, AssignmentType } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
-dotenv.config();
-
-const prisma = new PrismaClient();
+const path = require('path');
+const prisma = new PrismaClient({
+    __internal: {
+        engine: {
+            schemaPath: path.resolve(__dirname, 'schema.prisma')
+        }
+    }
+});
 
 async function main() {
     const hashedPassword = await bcrypt.hash('password123', 10);
+
+    // Roles and Enums are available on the prisma object in newer versions or as strings
+    const Role = {
+        SOLICITANTE: 'SOLICITANTE',
+        LOGISTICA: 'LOGISTICA',
+        EMPRESA_EXTERNA: 'EMPRESA_EXTERNA',
+        ADMIN: 'ADMIN',
+        COORDINADOR_INTERVENCION: 'COORDINADOR_INTERVENCION'
+    };
+    const AssignmentType = {
+        PERSONAL: 'PERSONAL',
+        PARQUE: 'PARQUE'
+    };
+
+    console.log('Starting seed...');
 
     // Create Users
     const admin = await prisma.user.upsert({

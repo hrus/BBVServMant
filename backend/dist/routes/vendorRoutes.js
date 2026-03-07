@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const vendorController_1 = require("../controllers/vendorController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/', auth_1.authenticate, vendorController_1.getVendors);
+router.post('/', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), vendorController_1.createVendor);
+router.put('/:id', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), vendorController_1.updateVendor);
+exports.default = router;
