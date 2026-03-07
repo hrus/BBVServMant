@@ -1,0 +1,33 @@
+﻿node.exe : 
+C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-node\src\index.ts:859
+En línea: 1 Carácter: 1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\U17846...rc\index.ts:859:String) [], Remot 
+   eException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: Ô¿» Unable to compile TypeScript:
+verify_api.ts(1,19): error TS2307: Cannot find module 'axios' or its corresponding type 
+declarations.
+
+    at createTSError (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-nod
+e\src\index.ts:859:12)
+    at reportTSError (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-nod
+e\src\index.ts:863:19)
+    at getOutput (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-node\sr
+c\index.ts:1077:36)
+    at Object.compile (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts-no
+de\src\index.ts:1433:41)
+    at Module.m._compile (C:\Users\U17846\Documents\Proyectos\BBVServMant\backend\node_modules\ts
+-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1839:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Users\U17846\Documents\Proyectos\BBVServ
+Mant\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14) {
+  diagnosticCodes: [ 2307 ]
+}

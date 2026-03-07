@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  password     String
+  name         String
+  role         Role             @default(SOLICITANTE)
+  vendorId     String?          @map("vendor_id")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  equipment    Equipment[]      @relation("UserEquipment")
+  logs         Log[]
+  sentRequests ServiceRequest[] @relation("SentRequests")
+  notifications Notification[]
+  vendor       Vendor?          @relation(fields: [vendorId], references: [id])
+
+  @@map("users")
+}
+
+model Vendor {
+  id             String          @id @default(uuid())
+  name           String          @unique
+  services       String?
+  contactInfo    String?         @map("contact_info")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  equipmentTypes EquipmentType[]
+  users          User[]
+
+  @@map("vendors")
+}
+
+model EquipmentType {
+  id        String             @id @default(uuid())
+  name      String             @unique
+  category  String             @default("General")
+  vendorId  String             @map("vendor_id")
+  createdAt DateTime           @default(now()) @map("created_at")
+  equipment Equipment[]
+  vendor    Vendor             @relation(fields: [vendorId], references: [id])
+  minStocks ParkEquipmentMin[]
+
+  @@map("equipment_types")
+}
+
+model Park {
+  id        String             @id @default(uuid())
+  name      String             @unique
+  createdAt DateTime           @default(now()) @map("created_at")
+  equipment Equipment[]
+  minStocks ParkEquipmentMin[]
+
+  @@map("parks")
+}
+
+model ParkEquipmentMin {
+  id            String        @id @default(uuid())
+  parkId        String        @map("park_id")
+  typeId        String        @map("type_id")
+  minQuantity   Int           @default(0) @map("min_quantity")
+  park          Park          @relation(fields: [parkId], references: [id])
+  equipmentType EquipmentType @relation(fields: [typeId], references: [id])
+
+  @@unique([parkId, typeId])
+  @@map("park_equipment_mins")
+}
+
+model Equipment {
+  id             String           @id @default(uuid())
+  visualId       String           @unique @map("visual_id")
+  qrCode         String?          @unique @map("qr_code")
+  rfidTag        String?          @unique @map("rfid_tag")
+  typeId         String           @map("type_id")
+  assignmentType AssignmentType   @default(PARQUE) @map("assignment_type")
+  ownerId        String?          @map("owner_id")
+  status         String           @default("EN_PARQUE")
+  location       String?
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  parkId         String?          @map("park_id")
+  owner          User?            @relation("UserEquipment", fields: [ownerId], references: [id])
+  park           Park?            @relation(fields: [parkId], references: [id])
+  type           EquipmentType    @relation(fields: [typeId], references: [id])
+  requests       ServiceRequest[]
+  logs           Log[]
+
+  @@map("equipment")
+}
+
+model ServiceRequest {
+  id             String      @id @default(uuid())
+  equipmentId    String      @map("equipment_id")
+  requesterId    String      @map("requester_id")
+  serviceType    ServiceType @map("service_type")
+  notes          String?
+  status         String      @default("SOLICITUD_CREADA")
+  pickupLocation String?     @map("pickup_location")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  logs           Log[]
+  equipment      Equipment   @relation(fields: [equipmentId], references: [id])
+  requester      User        @relation("SentRequests", fields: [requesterId], references: [id])
+
+  @@map("service_requests")
+}
+
+model Log {
+  id          String          @id @default(uuid())
+  requestId   String?         @map("request_id")
+  equipmentId String          @map("equipment_id")
+  userId      String          @map("user_id")
+  fromStatus  String          @map("from_status")
+  toStatus    String          @map("to_status")
+  notes       String?
+  timestamp   DateTime        @default(now())
+  request     ServiceRequest? @relation(fields: [requestId], references: [id])
+  equipment   Equipment       @relation(fields: [equipmentId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@map("logs")
+}
+
+enum Role {
+  SOLICITANTE
+  LOGISTICA
+  EMPRESA_EXTERNA
+  ADMIN
+  COORDINADOR_INTERVENCION
+}
+
+enum ServiceType {
+  LIMPIEZA
+  MANTENIMIENTO
+}
+
+enum AssignmentType {
+  PERSONAL
+  PARQUE
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}

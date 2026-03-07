@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const parkController_1 = require("../controllers/parkController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/', auth_1.authenticate, parkController_1.getParks);
+router.post('/', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), parkController_1.createPark);
+router.put('/:parkId/minimums', auth_1.authenticate, (0, auth_1.authorize)(['LOGISTICA', 'ADMIN']), parkController_1.updateParkMinimums);
+exports.default = router;
