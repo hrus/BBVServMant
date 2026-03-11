@@ -119,8 +119,8 @@ const RequestList: React.FC = () => {
                                     </div>
                                     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
                                         <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${req.serviceType === 'LIMPIEZA' ? 'bg-blue-500' : 'bg-amber-500'}`} />
-                                            <span className="font-bold uppercase tracking-wider text-[11px]">{req.serviceType}</span>
+                                            <div className={`w-2 h-2 rounded-full ${req.serviceType.name.toLowerCase().includes('limpieza') ? 'bg-blue-500' : 'bg-amber-500'}`} />
+                                            <span className="font-bold uppercase tracking-wider text-[11px]">{req.serviceType.name}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Clock size={16} className="text-slate-600" />

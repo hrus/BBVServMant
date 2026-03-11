@@ -32,6 +32,7 @@ model Vendor {
   createdAt      DateTime        @default(now()) @map("created_at")
   equipmentTypes EquipmentType[]
   users          User[]
+  serviceRelations VendorEquipmentService[]
 
   @@map("vendors")
 }
@@ -45,6 +46,7 @@ model EquipmentType {
   equipment Equipment[]
   vendor    Vendor             @relation(fields: [vendorId], references: [id])
   minStocks ParkEquipmentMin[]
+  serviceRelations VendorEquipmentService[]
 
   @@map("equipment_types")
 }
@@ -97,7 +99,7 @@ model ServiceRequest {
   id             String      @id @default(uuid())
   equipmentId    String      @map("equipment_id")
   requesterId    String      @map("requester_id")
-  serviceType    ServiceType @map("service_type")
+  serviceTypeId  String      @map("service_type_id")
   notes          String?
   status         String      @default("SOLICITUD_CREADA")
   pickupLocation String?     @map("pickup_location")
@@ -106,6 +108,7 @@ model ServiceRequest {
   logs           Log[]
   equipment      Equipment   @relation(fields: [equipmentId], references: [id])
   requester      User        @relation("SentRequests", fields: [requesterId], references: [id])
+  serviceType    ServiceType @relation(fields: [serviceTypeId], references: [id])
 
   @@map("service_requests")
 }
@@ -134,9 +137,29 @@ enum Role {
   COORDINADOR_INTERVENCION
 }
 
-enum ServiceType {
-  LIMPIEZA
-  MANTENIMIENTO
+model ServiceType {
+  id          String                   @id @default(uuid())
+  name        String                   @unique
+  description String?
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  assignments VendorEquipmentService[]
+  requests    ServiceRequest[]
+
+  @@map("service_types")
+}
+
+model VendorEquipmentService {
+  id                String        @id @default(uuid())
+  vendorId          String        @map("vendor_id")
+  equipmentTypeId   String        @map("equipment_type_id")
+  serviceTypeId     String        @map("service_type_id")
+  
+  vendor            Vendor        @relation(fields: [vendorId], references: [id])
+  equipmentType     EquipmentType @relation(fields: [equipmentTypeId], references: [id])
+  serviceType       ServiceType   @relation(fields: [serviceTypeId], references: [id])
+
+  @@unique([vendorId, equipmentTypeId, serviceTypeId])
+  @@map("vendor_equipment_services")
 }
 
 enum AssignmentType {

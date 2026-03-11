@@ -10,6 +10,8 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import typeRoutes from './routes/typeRoutes';
 import vendorRoutes from './routes/vendorRoutes';
+import serviceTypeRoutes from './routes/serviceTypeRoutes';
+import vendorServiceRoutes from './routes/vendorServiceRoutes';
 
 dotenv.config();
 
@@ -27,6 +29,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/vendors', vendorRoutes);
+app.use('/api/service-types', serviceTypeRoutes);
+app.use('/api/service-mappings', vendorServiceRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'PPE Maintenance Tracking API is running' });

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createRequestSchema = z.object({
     equipmentId: z.string().uuid(),
-    serviceType: z.enum(['LIMPIEZA', 'MANTENIMIENTO']),
+    serviceTypeId: z.string().uuid(),
     notes: z.string().optional(),
     pickupLocation: z.string().min(3, 'La ubicación es obligatoria'),
 });

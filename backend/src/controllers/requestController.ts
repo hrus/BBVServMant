@@ -10,7 +10,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: validated.error.issues[0].message });
     }
 
-    const { equipmentId, serviceType, notes, pickupLocation } = validated.data;
+    const { equipmentId, serviceTypeId, notes, pickupLocation } = validated.data;
     const requesterId = req.user?.id;
     if (!requesterId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -19,7 +19,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
             data: {
                 equipmentId,
                 requesterId,
-                serviceType,
+                serviceTypeId,
                 notes,
                 pickupLocation,
                 status: 'SOLICITUD_CREADA',
@@ -93,11 +93,12 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response) => {
 
         // Create notification for the requester
         if (oldRequest.requesterId !== userId) {
+            const serviceType = await prisma.serviceType.findUnique({ where: { id: oldRequest.serviceTypeId } });
             await prisma.notification.create({
                 data: {
                     userId: oldRequest.requesterId,
                     title: 'Estado de Solicitud Actualizado',
-                    message: `Tu solicitud de ${oldRequest.serviceType} ahora está en estado: ${status.replace(/_/g, ' ')}`,
+                    message: `Tu solicitud de ${serviceType?.name || 'servicio'} ahora está en estado: ${status.replace(/_/g, ' ')}`,
                 },
             });
         }
@@ -118,7 +119,11 @@ export const getRequests = async (req: AuthRequest, res: Response) => {
 
         const requests = await prisma.serviceRequest.findMany({
             where: filters,
-            include: { equipment: { include: { type: true } }, requester: true },
+            include: { 
+                equipment: { include: { type: true } }, 
+                requester: true,
+                serviceType: true 
+            },
         });
         res.json(requests);
     } catch (error) {

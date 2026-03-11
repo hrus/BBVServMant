@@ -1,10 +1,15 @@
 import { PrismaClient, Role, AssignmentType } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -75,6 +80,41 @@ async function main() {
         },
     });
 
+    // Create Parks
+    const centralPark = await prisma.park.upsert({
+        where: { name: 'Central' },
+        update: {},
+        create: { name: 'Central' }
+    });
+
+    const northPark = await prisma.park.upsert({
+        where: { name: 'Norte' },
+        update: {},
+        create: { name: 'Norte' }
+    });
+
+    // Create Service Types
+    const preventive = await prisma.serviceType.upsert({
+        where: { name: 'Preventivo' },
+        update: {},
+        create: { name: 'Preventivo', description: 'Mantenimiento preventivo programado' },
+    });
+    const corrective = await prisma.serviceType.upsert({
+        where: { name: 'Correctivo' },
+        update: {},
+        create: { name: 'Correctivo', description: 'Reparación de fallos detectados' },
+    });
+    const cleaning = await prisma.serviceType.upsert({
+        where: { name: 'Limpieza' },
+        update: {},
+        create: { name: 'Limpieza', description: 'Desinfección y limpieza profunda' },
+    });
+    const charging = await prisma.serviceType.upsert({
+        where: { name: 'Carga' },
+        update: {},
+        create: { name: 'Carga', description: 'Recarga de aire comprimido' },
+    });
+
     // Create Equipment Type
     const maskType = await prisma.equipmentType.upsert({
         where: { name: 'Máscara de Protección' },
@@ -94,6 +134,43 @@ async function main() {
         },
     });
 
+    const bottleType = await prisma.equipmentType.upsert({
+        where: { name: 'Botella Fibra' },
+        update: {},
+        create: {
+            name: 'Botella Fibra',
+            vendorId: vendor.id,
+            category: 'Recarga'
+        }
+    });
+
+    // Create Vendor-Equipment-Service Assignments
+    const serviceConfigs = [
+        { type: maskType, services: [preventive, corrective, cleaning] },
+        { type: eraType, services: [preventive, corrective] },
+        { type: bottleType, services: [preventive, corrective, charging] }
+    ];
+
+    for (const config of serviceConfigs) {
+        for (const service of config.services) {
+            await prisma.vendorEquipmentService.upsert({
+                where: {
+                    vendorId_equipmentTypeId_serviceTypeId: {
+                        vendorId: vendor.id,
+                        equipmentTypeId: config.type.id,
+                        serviceTypeId: service.id,
+                    }
+                },
+                update: {},
+                create: {
+                    vendorId: vendor.id,
+                    equipmentTypeId: config.type.id,
+                    serviceTypeId: service.id,
+                }
+            });
+        }
+    }
+
     // Create Equipment
     await prisma.equipment.upsert({
         where: { visualId: 'M-001' },
@@ -104,7 +181,8 @@ async function main() {
             typeId: maskType.id,
             assignmentType: AssignmentType.PARQUE,
             status: 'EN_PARQUE',
-            location: 'Parque Central - Estante 1',
+            location: 'Estante 1',
+            parkId: centralPark.id
         },
     });
 
@@ -118,7 +196,22 @@ async function main() {
             assignmentType: AssignmentType.PERSONAL,
             ownerId: firefighter.id,
             status: 'EN_PARQUE',
-            location: 'Parque Norte - Taquilla 42',
+            location: 'Taquilla 42',
+            parkId: northPark.id
+        },
+    });
+
+    await prisma.equipment.upsert({
+        where: { visualId: 'BF001' },
+        update: {},
+        create: {
+            visualId: 'BF001',
+            qrCode: 'QR-BF001',
+            typeId: bottleType.id,
+            assignmentType: AssignmentType.PARQUE,
+            status: 'EN_PARQUE',
+            location: 'Almacén Recarga',
+            parkId: centralPark.id
         },
     });
 

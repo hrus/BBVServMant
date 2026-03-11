@@ -16,7 +16,7 @@ export const register = async (req: Request, res: Response) => {
                 password: hashedPassword,
                 name,
                 role,
-                vendorId,
+                vendorId: vendorId || null,
             },
         });
 
@@ -87,7 +87,7 @@ export const updateUser = async (req: Request, res: Response) => {
     const { name, email, role, vendorId, password } = req.body;
 
     try {
-        const data: any = { name, email, role, vendorId };
+        const data: any = { name, email, role, vendorId: vendorId || null };
         if (password) {
             data.password = await bcrypt.hash(password, 10);
         }
