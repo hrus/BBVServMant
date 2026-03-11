@@ -145,10 +145,19 @@ const EquipmentList: React.FC = () => {
         e.type.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleExport = () => {
-        const token = localStorage.getItem('token');
-        // We use window.open for now, or fetch with blob if auth causes issues
-        window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/equipment/export?token=${token}`, '_blank');
+    const handleExport = async () => {
+        try {
+            const response = await api.get('/equipment/export', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'inventario_epp.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            showToast('Error al descargar el archivo', 'error');
+        }
     };
 
     return (

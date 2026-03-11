@@ -115,6 +115,8 @@ export const getRequests = async (req: AuthRequest, res: Response) => {
 
         if (req.user?.role === 'EMPRESA_EXTERNA' && req.user.vendorId) {
             filters.equipment = { type: { vendorId: req.user.vendorId } };
+        } else if (req.user?.role === 'SOLICITANTE') {
+            filters.requesterId = req.user?.id;
         }
 
         const requests = await prisma.serviceRequest.findMany({

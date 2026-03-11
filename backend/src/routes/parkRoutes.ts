@@ -4,7 +4,7 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', authenticate, getParks);
+router.get('/', authenticate, authorize(['LOGISTICA', 'ADMIN']), getParks);
 router.post('/', authenticate, authorize(['ADMIN']), createPark);
 router.put('/:parkId/minimums', authenticate, authorize(['ADMIN']), updateParkMinimums);
 router.delete('/:id', authenticate, authorize(['ADMIN']), deletePark);

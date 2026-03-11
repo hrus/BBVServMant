@@ -7,7 +7,7 @@ const router = Router();
 router.post('/register', authenticate, authorize(['ADMIN']), register);
 router.post('/login', login);
 
-router.get('/users', authenticate, getUsers);
+router.get('/users', authenticate, authorize(['ADMIN']), getUsers);
 
 router.put('/users/:id', authenticate, authorize(['ADMIN']), updateUser);
 router.delete('/users/:id', authenticate, authorize(['ADMIN']), deleteUser);
