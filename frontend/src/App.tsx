@@ -14,6 +14,7 @@ import TypeManagement from './pages/TypeManagement';
 import UserManagement from './pages/UserManagement';
 import EquipmentDetail from './pages/EquipmentDetail';
 import ServiceManagement from './pages/ServiceManagement';
+import ImportData from './pages/ImportData';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(!!localStorage.getItem('token'));
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/types" element={isAuthenticated ? <TypeManagement /> : <Navigate to="/login" />} />
                 <Route path="/services" element={isAuthenticated ? <ServiceManagement /> : <Navigate to="/login" />} />
                 <Route path="/users" element={isAuthenticated ? <UserManagement /> : <Navigate to="/login" />} />
+                <Route path="/import" element={isAuthenticated ? <ImportData /> : <Navigate to="/login" />} />
               </Routes>
             </div>
           </main>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
     ClipboardList, Package, MapPin, BarChart3, Building2, 
-    Tag, User, Wrench, LayoutDashboard, Menu, X, ChevronRight 
+    Tag, User, Wrench, LayoutDashboard, Menu, X, ChevronRight, Database 
 } from 'lucide-react';
 import type { Role } from '../types';
 
@@ -42,7 +42,8 @@ const Sidebar: React.FC = () => {
                     { label: 'Tipos de Equipo', to: '/types', icon: Tag },
                     { label: 'Servicios', to: '/services', icon: Wrench },
                     ...(userRole === 'ADMIN' ? [
-                        { label: 'Gestión Usuarios', to: '/users', icon: User }
+                        { label: 'Gestión Usuarios', to: '/users', icon: User },
+                        { label: 'Importar Datos', to: '/import', icon: Database }
                     ] : []),
                 ]
             }

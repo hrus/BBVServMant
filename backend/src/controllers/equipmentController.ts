@@ -138,19 +138,24 @@ export const exportEquipment = async (req: AuthRequest, res: Response) => {
         });
 
         // Convert to CSV
-        const header = 'ID Visual,Tipo,Categoria,Estado,Propietario,Ubicacion,Proveedor,Codigo QR,RFID\n';
+        const header = 'visualId,qrCode,typeName,assignmentType,ownerEmail,parkName,status,location\n';
         const rows = equipment.map(e => {
             return [
                 e.visualId,
+                e.qrCode || '',
                 e.type.name,
-                e.type.category,
+                e.assignmentType,
+                e.owner?.email || '',
+                e.park?.name || '',
                 e.status,
-                e.owner?.name || 'N/A',
-                e.park?.name || e.location || 'N/A',
-                e.type.vendor.name,
-                e.qrCode || 'N/A',
-                e.rfidTag || 'N/A'
-            ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+                e.location || ''
+            ].map(val => {
+                const s = String(val || '');
+                if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                    return `"${s.replace(/"/g, '""')}"`;
+                }
+                return s;
+            }).join(',');
         }).join('\n');
 
         const csv = header + rows;
