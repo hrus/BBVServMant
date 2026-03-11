@@ -1,0 +1,11 @@
+﻿--- BBVServMant API Validation ---
+[1] Testing Authentication...
+node.exe : 
+En línea: 1 Carácter: 1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ÔØî VALIDATION FAILED
+
